@@ -7,8 +7,64 @@ import java.sql.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * <strong>Repositório de Clientes</strong>
+ * <br />
+ * Implementação usando java.util.concurrent.atomic.AtomicReference pode ser considerada mais moderna e preferível por alguns motivos:
+ * <br />
+ * <strong>AtomicReference para thread safety:</strong> A versão usando AtomicReference é mais explícita sobre a garantia de thread safety. A classe AtomicReference fornece operações atômicas, o que ajuda a evitar a necessidade de sincronização manual usando blocos synchronized.
+ * <br />
+ * <strong>Performance:</strong> A implementação com AtomicReference é geralmente mais eficiente em termos de desempenho do que a sincronização manual usando blocos synchronized, especialmente em cenários de concorrência moderada a alta. A inicialização dupla reduz a sobrecarga de sincronização.
+ * <br />
+ * <strong>Clareza do código:</strong> A implementação usando AtomicReference é mais concisa e mais clara, destacando a intenção de usar um objeto atomicamente atualizado para garantir a inicialização segura.
+ * <br /><br />
+ * Portanto, em um contexto moderno e considerando as práticas atuais de programação em Java, a implementação usando AtomicReference é muitas vezes preferível para garantir a eficiência e a clareza do código em ambientes multithread.
+ * <br /><br />
+ */
 public class ClienteRepository implements Repository<Cliente, Long> {
+
+    /**
+     * Variável que <strong>armazena a única instância disponível da Classe</strong>
+     */
+    private static final AtomicReference<ClienteRepository> instance = new AtomicReference<>();
+
+
+    /**
+     * Construtor privado.
+     * <strong>Impedir a instânciação por outras classes.</strong>
+     */
+    private ClienteRepository() {
+    }
+
+    /**
+     * <strong>Método responsável pelo fornecimento da única instância da Classe ClienteRepository </strong>
+     * <br /><br />
+     * Nessa implementação, a instância da classe ClienteRepository é armazenada em um AtomicReference.
+     * <br />
+     * O método of() primeiro tenta obter a instância atual a partir do AtomicReference.
+     * Se a instância ainda não foi inicializada, cria-se uma nova instância e utiliza-se compareAndSet() para garantir que apenas uma instância seja criada e armazenada no AtomicReference.
+     * <br />
+     * Essa implementação é thread-safe e eficiente, garantindo que apenas uma instância da ClienteRepository seja criada, mesmo em um ambiente multithread.
+     * <br />
+     *
+     * @return ClienteRepository
+     */
+    public static ClienteRepository of() {
+        ClienteRepository result = instance.get();
+        if (Objects.isNull( result )) {
+            ClienteRepository factory = new ClienteRepository();
+            if (instance.compareAndSet( null, factory )) {
+                result = factory;
+            } else {
+                result = instance.get();
+            }
+        }
+        return result;
+    }
+
+
     @Override
     public List<Cliente> findAll() {
         //Vector que será abastecido com clientes
