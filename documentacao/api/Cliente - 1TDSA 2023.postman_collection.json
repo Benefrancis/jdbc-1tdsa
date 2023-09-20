@@ -1,0 +1,75 @@
+{
+	"info": {
+		"_postman_id": "bc016171-24f6-41b5-b36a-a838847b6e5c",
+		"name": "Cliente - 1TDSA 2023",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1524675",
+		"_collection_link": "https://benefrancis-0803.postman.co/workspace/Keyclock~93df9411-a0f6-46ba-b611-cf6bc7dceb77/collection/1524675-bc016171-24f6-41b5-b36a-a838847b6e5c?action=share&source=collection_link&creator=1524675"
+	},
+	"item": [
+		{
+			"name": "findAll",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/cliente",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"cliente"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "findById",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/cliente/9574524",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"cliente",
+						"9574524"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "persiste",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "    {\r\n        \"nome\": \"Benefrancis do Nascimento\"\r\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/cliente",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"cliente"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

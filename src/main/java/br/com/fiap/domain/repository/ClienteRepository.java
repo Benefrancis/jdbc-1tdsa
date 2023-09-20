@@ -6,6 +6,7 @@ import br.com.fiap.infra.ConnectionFactory;
 import java.sql.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -154,7 +155,7 @@ public class ClienteRepository implements Repository<Cliente, Long> {
             PreparedStatement preparedStatement = connection.prepareStatement( sql );
 
             //Transformando o texto em maiúsculo
-            var t = Objects.nonNull( texto ) ? texto.toUpperCase() : "";
+            String t = Objects.nonNull( texto ) ? texto.toUpperCase() : "";
 
             preparedStatement.setString( 1, "%" + t + "%" );
 
@@ -188,24 +189,33 @@ public class ClienteRepository implements Repository<Cliente, Long> {
     @Override
     public Cliente persist(Cliente cliente) {
 
-        var sql = "INSERT INTO cliente (ID_CLIENTE, NM_CLIENTE) VALUES (?,?)";
+        var sql = "begin INSERT INTO cliente (ID_CLIENTE, NM_CLIENTE) VALUES (?,?) returning ID_CLIENTE into ?; end;";
 
         ConnectionFactory factory = ConnectionFactory.of();
         Connection connection = factory.getConnection();
 
+        CallableStatement callableStatement = null;
+
+
         try {
 
-            PreparedStatement preparedStatement = connection.prepareStatement( sql );
+            callableStatement = connection.prepareCall( sql );
 
-            preparedStatement.setLong( 1, cliente.getId() );
-            preparedStatement.setString( 2, cliente.getNome() );
+            callableStatement.setLong( 1, new Random().nextLong( 1, 9999999 ) );
+            callableStatement.setString( 2, cliente.getNome() );
 
-            preparedStatement.execute();
+            callableStatement.registerOutParameter( 3, Types.BIGINT );
+            callableStatement.executeUpdate();
+
+            //Inserindo o Id do Cliente
+            cliente.setId( (long) callableStatement.getInt( 3 ) );
+
+
+
             System.out.println( "Cliente salvo com sucesso!!" );
 
-            preparedStatement.close();
+            callableStatement.close();
             connection.close();
-
         } catch (SQLException e) {
             System.err.println( "Não foi possível executar o comando!\n" + e.getMessage() );
         }
