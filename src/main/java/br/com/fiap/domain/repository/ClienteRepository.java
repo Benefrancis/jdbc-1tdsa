@@ -210,8 +210,6 @@ public class ClienteRepository implements Repository<Cliente, Long> {
             //Inserindo o Id do Cliente
             cliente.setId( (long) callableStatement.getInt( 3 ) );
 
-
-
             System.out.println( "Cliente salvo com sucesso!!" );
 
             callableStatement.close();
