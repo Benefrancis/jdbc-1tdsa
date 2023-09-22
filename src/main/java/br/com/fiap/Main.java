@@ -49,7 +49,7 @@ public class Main {
         return null;
     }
 
-    private static final String BASE_URI = "http://localhost";
+    private static final String BASE_URI = "http://localhost/";
 
     public static HttpServer startServer() {
         // Configure container response filters (CORSFilter)
