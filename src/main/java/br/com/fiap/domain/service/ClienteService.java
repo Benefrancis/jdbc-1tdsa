@@ -10,7 +10,6 @@ public class ClienteService implements Service<Cliente, Long> {
 
     private ClienteRepository repo = ClienteRepository.of();
 
-
     @Override
     public List<Cliente> findAll() {
         return repo.findAll();

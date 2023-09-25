@@ -2,6 +2,13 @@ package br.com.fiap.domain.service;
 
 import java.util.List;
 
+/**
+ * Padronização de métodos de Service
+ *
+ * @param <T>
+ * @param <U>
+ * @author Benefrancis
+ */
 public interface Service<T, U> {
 
     public List<T> findAll();

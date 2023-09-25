@@ -2,6 +2,14 @@ package br.com.fiap.domain.repository;
 
 import java.util.List;
 
+
+/**
+ * Padronizando métodos de Repositório
+ *
+ * @param <T>
+ * @param <U>
+ * @author Benefrancis
+ */
 public interface Repository<T, U> {
 
     public List<T> findAll();
@@ -12,9 +20,7 @@ public interface Repository<T, U> {
 
     public T persist(T t);
 
-
     public T update(T t);
-
 
     public boolean delete(U id);
 

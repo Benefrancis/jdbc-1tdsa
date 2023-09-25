@@ -1,10 +1,14 @@
 package br.com.fiap.domain.resources;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 
-
+/**
+ * Padronização de métodos de Resource
+ * @author Benefrancis
+ * @param <T>
+ * @param <U>
+ */
 public interface Resource<T, U> {
 
 
@@ -13,7 +17,6 @@ public interface Resource<T, U> {
      *
      * @return
      */
-
     public Response findAll();
 
     /**
@@ -22,7 +25,6 @@ public interface Resource<T, U> {
      * @param id
      * @return
      */
-
     public Response findById(@PathParam("id") U id);
 
     /**
@@ -31,7 +33,6 @@ public interface Resource<T, U> {
      * @param t
      * @return
      */
-
     public Response persist(T t);
 
     /**
@@ -45,6 +46,7 @@ public interface Resource<T, U> {
 
     /**
      * Delete resource
+     *
      * @param id
      * @return
      */
