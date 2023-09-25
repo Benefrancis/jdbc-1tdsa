@@ -1,6 +1,6 @@
 package br.com.fiap;
 
-import br.com.fiap.infra.configuration.cors.MyApplication;
+import br.com.fiap.infra.configuration.cors.Configuration;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 
@@ -12,7 +12,7 @@ public class Main {
     public static final String BASE_URI = "http://localhost/";
 
     public static HttpServer startServer() {
-        return GrizzlyHttpServerFactory.createHttpServer( URI.create( BASE_URI ), new MyApplication() );
+        return GrizzlyHttpServerFactory.createHttpServer( URI.create( BASE_URI ), new Configuration() );
     }
 
     public static void main(String[] args) {

@@ -54,9 +54,9 @@ public class ClienteRepository implements Repository<Cliente, Long> {
      */
     public static ClienteRepository of() {
         ClienteRepository result = instance.get();
-        if (Objects.isNull( result )) {
+        if (Objects.isNull(result)) {
             ClienteRepository factory = new ClienteRepository();
-            if (instance.compareAndSet( null, factory )) {
+            if (instance.compareAndSet(null, factory)) {
                 result = factory;
             } else {
                 result = instance.get();
@@ -73,33 +73,33 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
         try {
             //Criando a fábrica de conexão
-            ConnectionFactory factory = ConnectionFactory.of();
+            ConnectionFactory factory = ConnectionFactory.build();
             //Fabricando a conexão
             Connection connection = factory.getConnection();
 
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery( "SELECT * FROM cliente" );
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM cliente");
 
             //Encontramos dados?
             if (resultSet.isBeforeFirst()) {
                 //Navegue até o próximo
                 while (resultSet.next()) {
                     //Pego os dados do Cliente
-                    Long id = resultSet.getLong( "ID_CLIENTE" );
-                    String nome = resultSet.getString( "NM_CLIENTE" );
+                    Long id = resultSet.getLong("ID_CLIENTE");
+                    String nome = resultSet.getString("NM_CLIENTE");
                     //Crio uma instância
-                    Cliente cliente = new Cliente( id, nome );
+                    Cliente cliente = new Cliente(id, nome);
                     //Adiciono na coleção
-                    clientes.add( cliente );
+                    clientes.add(cliente);
 
-                    System.out.println( cliente );
+                    System.out.println(cliente);
                 }
             }
             resultSet.close();
             statement.close();
             connection.close();
         } catch (SQLException e) {
-            System.err.println( "Não foi possivel consultar os dados!\n" + e.getMessage() );
+            System.err.println("Não foi possivel consultar os dados!\n" + e.getMessage());
         }
         return clientes;
     }
@@ -109,33 +109,33 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
         var sql = "SELECT * FROM cliente where ID_CLIENTE=?";
 
-        ConnectionFactory factory = ConnectionFactory.of();
+        ConnectionFactory factory = ConnectionFactory.build();
         Connection connection = factory.getConnection();
 
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement( sql );
-            preparedStatement.setLong( 1, id );
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.isBeforeFirst()) {
                 while (resultSet.next()) {
                     //Pego os dados do Cliente
-                    Long idCliente = resultSet.getLong( "ID_CLIENTE" );
-                    String nome = resultSet.getString( "NM_CLIENTE" );
+                    Long idCliente = resultSet.getLong("ID_CLIENTE");
+                    String nome = resultSet.getString("NM_CLIENTE");
                     //Crio uma instância
-                    Cliente cliente = new Cliente( idCliente, nome );
-                    System.out.println( cliente );
+                    Cliente cliente = new Cliente(idCliente, nome);
+                    System.out.println(cliente);
                     return cliente;
                 }
             } else {
-                System.out.println( "Cliente não encontrado com o id = " + id );
+                System.out.println("Cliente não encontrado com o id = " + id);
             }
             resultSet.close();
             preparedStatement.close();
             connection.close();
         } catch (SQLException e) {
-            System.err.println( "Não foi possível executar a consulta: \n" + e.getMessage() );
+            System.err.println("Não foi possível executar a consulta: \n" + e.getMessage());
         }
         return null;
     }
@@ -148,16 +148,16 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
         var sql = "SELECT * FROM cliente where UPPER(NM_CLIENTE) like ?";
 
-        ConnectionFactory factory = ConnectionFactory.of();
+        ConnectionFactory factory = ConnectionFactory.build();
         Connection connection = factory.getConnection();
 
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement( sql );
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
             //Transformando o texto em maiúsculo
-            String t = Objects.nonNull( texto ) ? texto.toUpperCase() : "";
+            String t = Objects.nonNull(texto) ? texto.toUpperCase() : "";
 
-            preparedStatement.setString( 1, "%" + t + "%" );
+            preparedStatement.setString(1, "%" + t + "%");
 
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -166,22 +166,22 @@ public class ClienteRepository implements Repository<Cliente, Long> {
                 //Navegue até o próximo
                 while (resultSet.next()) {
                     //Pego os dados do Cliente
-                    Long id = resultSet.getLong( "ID_CLIENTE" );
-                    String nome = resultSet.getString( "NM_CLIENTE" );
+                    Long id = resultSet.getLong("ID_CLIENTE");
+                    String nome = resultSet.getString("NM_CLIENTE");
                     //Crio uma instância
-                    Cliente cliente = new Cliente( id, nome );
+                    Cliente cliente = new Cliente(id, nome);
                     //Adiciono na coleção
-                    clientes.add( cliente );
-                    System.out.println( cliente );
+                    clientes.add(cliente);
+                    System.out.println(cliente);
                 }
             } else {
-                System.out.println( "Cliente não encontrado com o nome = " + texto );
+                System.out.println("Cliente não encontrado com o nome = " + texto);
             }
             resultSet.close();
             preparedStatement.close();
             connection.close();
         } catch (SQLException e) {
-            System.err.println( "Não foi possível executar a consulta: \n" + e.getMessage() );
+            System.err.println("Não foi possível executar a consulta: \n" + e.getMessage());
         }
         return clientes;
     }
@@ -189,34 +189,83 @@ public class ClienteRepository implements Repository<Cliente, Long> {
     @Override
     public Cliente persist(Cliente cliente) {
 
-        var sql = "begin INSERT INTO cliente (ID_CLIENTE, NM_CLIENTE) VALUES (?,?) returning ID_CLIENTE into ?; end;";
+        var sql = "INSERT INTO cliente (NM_CLIENTE) VALUES (?)";
 
-        ConnectionFactory factory = ConnectionFactory.of();
+        ConnectionFactory factory = ConnectionFactory.build();
         Connection connection = factory.getConnection();
-
-        CallableStatement callableStatement = null;
-
 
         try {
 
-            callableStatement = connection.prepareCall( sql );
+            // Inserir o cliente
+            PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            ps.setString(1, cliente.getNome().trim());
+            ps.execute();
 
-            callableStatement.setLong( 1, new Random().nextLong( 1, 9999999 ) );
-            callableStatement.setString( 2, cliente.getNome() );
+            // Obter o ID gerado
+            ResultSet rs = ps.getGeneratedKeys();
 
-            callableStatement.registerOutParameter( 3, Types.BIGINT );
-            callableStatement.executeUpdate();
+            if (rs.next()) {
+                cliente.setId(rs.getLong(1));
+                System.out.println("Cliente salvo com sucesso! ID: " + cliente.getId());
+            } else {
+                throw new SQLException("Não foi possível obter o ID do cliente após a inserção.");
+            }
 
-            //Inserindo o Id do Cliente
-            cliente.setId( (long) callableStatement.getInt( 3 ) );
-
-            System.out.println( "Cliente salvo com sucesso!!" );
-
-            callableStatement.close();
+            ps.close();
             connection.close();
         } catch (SQLException e) {
-            System.err.println( "Não foi possível executar o comando!\n" + e.getMessage() );
+            System.err.println("Não foi possível executar o comando!\n" + e.getMessage());
         }
         return cliente;
+    }
+
+    @Override
+    public Cliente update(Cliente cliente) {
+
+        PreparedStatement ps = null;
+
+        var sql = "UPDATE cliente SET NM_CLIENTE = ? where ID_CLIENTE=?";
+
+        ConnectionFactory factory = ConnectionFactory.build();
+        Connection connection = factory.getConnection();
+
+        try {
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, cliente.getNome());
+            ps.setLong(2, cliente.getId());
+            int itensAtualizados = ps.executeUpdate();
+
+            ps.close();
+            connection.close();
+            if (itensAtualizados > 0) return findById(cliente.getId());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+
+
+    }
+
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public boolean delete(Long id) {
+        PreparedStatement ps = null;
+        var sql = "DELETE from cliente where ID_CLIENTE=?";
+        ConnectionFactory factory = ConnectionFactory.build();
+        Connection connection = factory.getConnection();
+        try {
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, id);
+            int itensRemovidos = ps.executeUpdate();
+            ps.close();
+            connection.close();
+            if (itensRemovidos > 0) return true;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
     }
 }

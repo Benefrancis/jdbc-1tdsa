@@ -12,4 +12,8 @@ public interface Service<T, U> {
 
     public T persist(T t);
 
+    public T update(T t);
+
+    public boolean delete(U id);
+
 }

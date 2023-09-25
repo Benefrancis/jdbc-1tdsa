@@ -1,5 +1,8 @@
 package br.com.fiap.infra;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,8 +32,9 @@ public class ConnectionFactory {
     /**
      * Variável que <strong>armazena a única instância disponível da Classe</strong>
      */
-
     private static final AtomicReference<ConnectionFactory> instance = new AtomicReference<>();
+
+    private volatile Connection connection;
 
     /**
      * Construtor privado.
@@ -38,7 +42,6 @@ public class ConnectionFactory {
      */
     private ConnectionFactory() {
     }
-
 
     /**
      * <strong>Método responsável pelo fornecimento da única instância da Classe ConnectionFactory </strong>
@@ -53,11 +56,11 @@ public class ConnectionFactory {
      *
      * @return
      */
-    public static ConnectionFactory of() {
+    public static ConnectionFactory build() {
         ConnectionFactory result = instance.get();
-        if (Objects.isNull( result )) {
+        if (Objects.isNull(result)) {
             ConnectionFactory factory = new ConnectionFactory();
-            if (instance.compareAndSet( null, factory )) {
+            if (instance.compareAndSet(null, factory)) {
                 result = factory;
             } else {
                 result = instance.get();
@@ -71,56 +74,94 @@ public class ConnectionFactory {
      *
      * @return
      */
-    public  Connection getConnection() {
+    public Connection getConnection() {
 
+        synchronized (Connection.class) {
 
+            try {
+
+                if (Objects.nonNull(this.connection) && !this.connection.isClosed()) {
+                    return this.connection;
+                }
+
+                var credenciais = getCredenciais();
+
+                HikariDataSource dataSource = new HikariDataSource(credenciais);
+
+                return dataSource.getConnection();
+
+            } catch (SQLException e) {
+                System.err.println("Não foi possível realizar a conexão com o banco de dados: " + e.getMessage());
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Método responsável por carregar as propriedades de conexão com o SGBD e retornar as Configurações
+     *
+     * @return
+     */
+    private static HikariConfig getCredenciais() {
+
+        var config = new HikariConfig();
         Properties prop = new Properties();
-        FileInputStream file = null;
+        FileInputStream file;
 
         String url = null;
         String pass = null;
         String user = null;
         String driver = null;
-        String debugar = null;
+        String debugar = "false";
+        Integer pullSize = 3;
 
         try {
 
-            file = new FileInputStream( "src/main/resources/application.properties" );
-            prop.load( file );
-
-            url = prop.getProperty( "datasource.url" );
-            user = prop.getProperty( "datasource.username" );
-            pass = prop.getProperty( "datasource.password" );
-            driver = prop.getProperty( "datasource.driver-class-name" );
-            debugar = prop.getProperty( "datasource.debugar" );
+            file = new FileInputStream("src/main/resources/application.properties");
+            prop.load(file);
             file.close();
 
-            if (Objects.isNull( driver ) || driver.equals( "" )) {
-                System.out.println( "\nInforme os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]" );
-                throw new RuntimeException( "Informe os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]" );
+            url = prop.getProperty("datasource.url");
+            user = prop.getProperty("datasource.username");
+            pass = prop.getProperty("datasource.password");
+            driver = prop.getProperty("datasource.driver-class-name");
+            debugar = prop.getProperty("datasource.debugar");
+            pullSize = Integer.valueOf(prop.getProperty("datasource.pull.size"));
+
+
+            if (Objects.isNull(driver) || driver.equals("")) {
+                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
+                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
             }
 
-            if (Objects.isNull( url ) || url.equals( "" )) {
-                System.out.println( "\nInforme os dados de conexão no arquivo application.properties [ datasource.url ]" );
-                throw new RuntimeException( "Informe os dados de conexão no arquivo application.properties [ datasource.url ]" );
+            if (Objects.isNull(url) || url.equals("")) {
+                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.url ]");
+                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.url ]");
             }
 
-            if (Objects.isNull( user ) || user.equals( "" )) {
-                System.out.println( "\nInforme os dados de conexão no arquivo application.properties [ datasource.username ]" );
-                throw new RuntimeException( "Informe os dados de conexão no arquivo application.properties [ datasource.username ]" );
+            if (Objects.isNull(user) || user.equals("")) {
+                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.username ]");
+                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.username ]");
             }
-
-
-            return DriverManager.getConnection( url, user, pass );
 
         } catch (FileNotFoundException e) {
-            System.err.println( "Não encontramos o arquivo de configuração: " + e.getMessage() );
+            System.err.println("Não encontramos o arquivo de configuração: " + e.getMessage());
         } catch (IOException e) {
-            System.err.println( "Não foi possível ler o arquivo de configuração: " + e.getMessage() );
-        } catch (SQLException e) {
-            System.err.println( "Não foi possível realizar a conexão com o banco de dados: " + e.getMessage() );
+            System.err.println("Não foi possível ler o arquivo de configuração: " + e.getMessage());
         }
-        return null;
+
+
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(pass);
+        config.setMaximumPoolSize(pullSize);
+
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmCacheSize", "250");
+        config.addDataSourceProperty("prepStmCacheSQLLimit", "2048");
+
+        return config;
     }
 
 

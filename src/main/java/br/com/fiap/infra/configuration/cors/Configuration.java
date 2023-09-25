@@ -2,9 +2,9 @@ package br.com.fiap.infra.configuration.cors;
 
 import org.glassfish.jersey.server.ResourceConfig;
 
-public class MyApplication extends ResourceConfig {
+public class Configuration extends ResourceConfig {
 
-    public MyApplication() {
+    public Configuration() {
         // Pacote onde estão suas classes de recursos
         packages("br.com.fiap.domain.resources");
 
