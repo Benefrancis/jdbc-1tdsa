@@ -6,7 +6,6 @@ import br.com.fiap.infra.ConnectionFactory;
 import java.sql.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -31,7 +30,6 @@ public class ClienteRepository implements Repository<Cliente, Long> {
      */
     private static final AtomicReference<ClienteRepository> instance = new AtomicReference<>();
 
-
     /**
      * Construtor privado.
      * <strong>Impedir a instânciação por outras classes.</strong>
@@ -44,7 +42,7 @@ public class ClienteRepository implements Repository<Cliente, Long> {
      * <br /><br />
      * Nessa implementação, a instância da classe ClienteRepository é armazenada em um AtomicReference.
      * <br />
-     * O método of() primeiro tenta obter a instância atual a partir do AtomicReference.
+     * O método build() primeiro tenta obter a instância atual a partir do AtomicReference.
      * Se a instância ainda não foi inicializada, cria-se uma nova instância e utiliza-se compareAndSet() para garantir que apenas uma instância seja criada e armazenada no AtomicReference.
      * <br />
      * Essa implementação é thread-safe e eficiente, garantindo que apenas uma instância da ClienteRepository seja criada, mesmo em um ambiente multithread.
@@ -52,7 +50,7 @@ public class ClienteRepository implements Repository<Cliente, Long> {
      *
      * @return ClienteRepository
      */
-    public static ClienteRepository of() {
+    public static ClienteRepository build() {
         ClienteRepository result = instance.get();
         if (Objects.isNull(result)) {
             ClienteRepository factory = new ClienteRepository();
@@ -65,6 +63,11 @@ public class ClienteRepository implements Repository<Cliente, Long> {
         return result;
     }
 
+    /**
+     * Demais Métodos
+     *
+     * @return
+     */
 
     @Override
     public List<Cliente> findAll() {
@@ -76,10 +79,8 @@ public class ClienteRepository implements Repository<Cliente, Long> {
             ConnectionFactory factory = ConnectionFactory.build();
             //Fabricando a conexão
             Connection connection = factory.getConnection();
-
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM cliente");
-
             //Encontramos dados?
             if (resultSet.isBeforeFirst()) {
                 //Navegue até o próximo
@@ -91,8 +92,6 @@ public class ClienteRepository implements Repository<Cliente, Long> {
                     Cliente cliente = new Cliente(id, nome);
                     //Adiciono na coleção
                     clientes.add(cliente);
-
-                    System.out.println(cliente);
                 }
             }
             resultSet.close();
@@ -118,22 +117,20 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.isBeforeFirst()) {
-                while (resultSet.next()) {
-                    //Pego os dados do Cliente
-                    Long idCliente = resultSet.getLong("ID_CLIENTE");
-                    String nome = resultSet.getString("NM_CLIENTE");
-                    //Crio uma instância
-                    Cliente cliente = new Cliente(idCliente, nome);
-                    System.out.println(cliente);
-                    return cliente;
-                }
+            if (resultSet.isBeforeFirst() && resultSet.next()) {
+                //Pego os dados do Cliente
+                Long idCliente = resultSet.getLong("ID_CLIENTE");
+                String nome = resultSet.getString("NM_CLIENTE");
+                //Crio uma instância
+                Cliente cliente = new Cliente(idCliente, nome);
+                //Encerro os objetos
+                resultSet.close();
+                preparedStatement.close();
+                connection.close();
+                return cliente;
             } else {
                 System.out.println("Cliente não encontrado com o id = " + id);
             }
-            resultSet.close();
-            preparedStatement.close();
-            connection.close();
         } catch (SQLException e) {
             System.err.println("Não foi possível executar a consulta: \n" + e.getMessage());
         }
@@ -142,10 +139,8 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
     @Override
     public List<Cliente> findByName(String texto) {
-
         //Vector que será abastecido com clientes
         Vector<Cliente> clientes = new Vector<>();
-
         var sql = "SELECT * FROM cliente where UPPER(NM_CLIENTE) like ?";
 
         ConnectionFactory factory = ConnectionFactory.build();
@@ -153,14 +148,11 @@ public class ClienteRepository implements Repository<Cliente, Long> {
 
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-
             //Transformando o texto em maiúsculo
             String t = Objects.nonNull(texto) ? texto.toUpperCase() : "";
-
             preparedStatement.setString(1, "%" + t + "%");
 
             ResultSet resultSet = preparedStatement.executeQuery();
-
             //Encontramos dados?
             if (resultSet.isBeforeFirst()) {
                 //Navegue até o próximo
@@ -195,7 +187,6 @@ public class ClienteRepository implements Repository<Cliente, Long> {
         Connection connection = factory.getConnection();
 
         try {
-
             // Inserir o cliente
             PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
             ps.setString(1, cliente.getNome().trim());
@@ -210,7 +201,6 @@ public class ClienteRepository implements Repository<Cliente, Long> {
             } else {
                 throw new SQLException("Não foi possível obter o ID do cliente após a inserção.");
             }
-
             ps.close();
             connection.close();
         } catch (SQLException e) {
@@ -242,14 +232,8 @@ public class ClienteRepository implements Repository<Cliente, Long> {
             throw new RuntimeException(e);
         }
         return null;
-
-
     }
 
-    /**
-     * @param id
-     * @return
-     */
     @Override
     public boolean delete(Long id) {
         PreparedStatement ps = null;

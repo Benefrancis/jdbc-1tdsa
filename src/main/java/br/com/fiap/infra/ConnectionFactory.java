@@ -47,7 +47,7 @@ public class ConnectionFactory {
      * <br /><br />
      * Nessa implementação, a instância da classe ConnectionFactory é armazenada em um AtomicReference.
      * <br />
-     * O método of() primeiro tenta obter a instância atual a partir do AtomicReference.
+     * O método build() primeiro tenta obter a instância atual a partir do AtomicReference.
      * Se a instância ainda não foi inicializada, cria-se uma nova instância e utiliza-se compareAndSet() para garantir que apenas uma instância seja criada e armazenada no AtomicReference.
      * <br />
      * Essa implementação é thread-safe e eficiente, garantindo que apenas uma instância da ConnectionFactory seja criada, mesmo em um ambiente multithread.
@@ -69,31 +69,27 @@ public class ConnectionFactory {
     }
 
     /**
-     * A classe ConnectionFactory existe para fabricar Connection
+     * O método getConnection está envolvido num bloco synchronized para evitar problema de corrida.
+     * Estamos utilizando o Hikari, pois com ele nós podemos dar mais agilidade ao nosso sistema, pois
+     * essa ferramenta utiliza pooling de conexões JDBC muito leve (com cerca de 130Kb) e extremamente rápido
+     * desenvolvido por Brett Wooldridge por volta de 2012.
      *
-     * @return
+     * @return Connection
      */
     public Connection getConnection() {
 
         synchronized (Connection.class) {
-
             try {
-
                 if (Objects.nonNull(this.connection) && !this.connection.isClosed()) {
                     return this.connection;
                 }
-
                 var credenciais = getCredenciais();
-
                 HikariDataSource dataSource = new HikariDataSource(credenciais);
-
                 return dataSource.getConnection();
-
             } catch (SQLException e) {
                 System.err.println("Não foi possível realizar a conexão com o banco de dados: " + e.getMessage());
             }
         }
-
         return null;
     }
 
@@ -104,17 +100,11 @@ public class ConnectionFactory {
      */
     private static HikariConfig getCredenciais() {
 
+        String url = null, pass = null, user = null, driver = null, debugar = "false";
         var config = new HikariConfig();
         Properties prop = new Properties();
         FileInputStream file;
-
-        String url = null;
-        String pass = null;
-        String user = null;
-        String driver = null;
-        String debugar = "false";
         Integer pullSize = 3;
-
         try {
 
             file = new FileInputStream("src/main/resources/application.properties");
@@ -128,20 +118,21 @@ public class ConnectionFactory {
             debugar = prop.getProperty("datasource.debugar");
             pullSize = Integer.valueOf(prop.getProperty("datasource.pull.size"));
 
+            {
+                if (Objects.isNull(driver) || driver.equals("")) {
+                    System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
+                    throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
+                }
 
-            if (Objects.isNull(driver) || driver.equals("")) {
-                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
-                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.driver-class-name ]");
-            }
+                if (Objects.isNull(url) || url.equals("")) {
+                    System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.url ]");
+                    throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.url ]");
+                }
 
-            if (Objects.isNull(url) || url.equals("")) {
-                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.url ]");
-                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.url ]");
-            }
-
-            if (Objects.isNull(user) || user.equals("")) {
-                System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.username ]");
-                throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.username ]");
+                if (Objects.isNull(user) || user.equals("")) {
+                    System.out.println("\nInforme os dados de conexão no arquivo application.properties [ datasource.username ]");
+                    throw new RuntimeException("Informe os dados de conexão no arquivo application.properties [ datasource.username ]");
+                }
             }
 
         } catch (FileNotFoundException e) {
@@ -149,7 +140,6 @@ public class ConnectionFactory {
         } catch (IOException e) {
             System.err.println("Não foi possível ler o arquivo de configuração: " + e.getMessage());
         }
-
 
         config.setJdbcUrl(url);
         config.setUsername(user);
@@ -162,6 +152,4 @@ public class ConnectionFactory {
 
         return config;
     }
-
-
 }

@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class ClienteService implements Service<Cliente, Long> {
 
-    private ClienteRepository repo = ClienteRepository.of();
+    private ClienteRepository repo = ClienteRepository.build();
 
     @Override
     public List<Cliente> findAll() {
