@@ -1,10 +1,8 @@
 package br.com.fiap;
 
-import br.com.fiap.infra.ConnectionFactory;
-import br.com.fiap.infra.configuration.cors.CORSFilter;
+import br.com.fiap.infra.configuration.cors.MyApplication;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,15 +12,7 @@ public class Main {
     public static final String BASE_URI = "http://localhost/";
 
     public static HttpServer startServer() {
-
-        final ResourceConfig rc = new ResourceConfig()
-                // Configure container response filters (CORSFilter)
-                .register( CORSFilter.class )
-                // Configure ConnectionFactory
-                .register( ConnectionFactory.class )
-                // Configure os pacotes em que temos Recursos da API REST
-                .packages( "br.com.fiap.domain.resources" );
-        return GrizzlyHttpServerFactory.createHttpServer( URI.create( BASE_URI ), rc );
+        return GrizzlyHttpServerFactory.createHttpServer( URI.create( BASE_URI ), new MyApplication() );
     }
 
     public static void main(String[] args) {
@@ -33,11 +23,9 @@ public class Main {
 
         try {
             System.in.read();
-            server.stop();
+            server.shutdownNow();
         } catch (IOException e) {
             throw new RuntimeException( e );
         }
     }
-
 }
-

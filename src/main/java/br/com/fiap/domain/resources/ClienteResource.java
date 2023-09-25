@@ -9,7 +9,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
-@Path("/cliente")
+@Path("cliente")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ClienteResource implements Resource<Cliente, Long> {
 
     @Context
@@ -18,14 +20,12 @@ public class ClienteResource implements Resource<Cliente, Long> {
     private ClienteService service = new ClienteService();
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Override
     public Response findAll() {
         List<Cliente> all = service.findAll();
 
         return Response
                 .status( Response.Status.OK )
-                //.entity( all.stream().map( ClienteDTO::of ).toList() )
                 .entity( all )
                 .build();
     }
@@ -33,7 +33,6 @@ public class ClienteResource implements Resource<Cliente, Long> {
 
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Override
     public Response findById(@PathParam("id") Long id) {
         Cliente c = service.findById( id );
