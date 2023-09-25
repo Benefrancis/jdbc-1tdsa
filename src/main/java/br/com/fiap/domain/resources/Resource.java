@@ -11,7 +11,6 @@ import jakarta.ws.rs.core.Response;
  */
 public interface Resource<T, U> {
 
-
     /**
      * Find all itens
      *
