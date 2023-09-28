@@ -11,25 +11,24 @@ import java.util.List;
 import java.util.Objects;
 
 @Path("/cliente")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ClienteResource {
 
     @Context
     UriInfo uriInfo;
 
-    private ClienteRepository repo = new ClienteRepository();
+    private ClienteRepository repo =  ClienteRepository.build();
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public Response findAll() {
         List<Cliente> clientes = new ArrayList<>();
         clientes = repo.findAll();
         return Response.ok(clientes).build();
     }
 
-
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response findById(@PathParam("id") Long id) {
         Cliente cliente = repo.findById(id);
         if (Objects.isNull(cliente)) return Response.status(404).build();
@@ -37,7 +36,6 @@ public class ClienteResource {
     }
 
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     public Response persit(Cliente c) {
         Cliente cliente = repo.persist(c);
         //Criando a URI da requisição
